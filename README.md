@@ -195,17 +195,45 @@ vocabulary:
 
 メニューバーの 🎤 をクリック:
 
+**アプリの操作はすべてメニューバーから完結します** (設定ファイルを触らなくても
+モード切替・モデル切替・語彙登録ができます)。
+
+```
+🎤
+├── Status: idle                    現在の状態
+├── ──
+├── Format          ▶  raw / clean / mail / mail_en
+├── LLM Model       ▶  整形用モデルの一覧 + Refresh model list
+├── STT Model       ▶  文字起こしモデルの切替
+├── History         ▶  直近 10 件 + Open history file / Clear history
+├── Vocabulary      ▶  + 単語を追加… / ✎ 一覧をまとめて編集… / 登録済み (N) / Refresh now
+├── Auto-paste          ✓ トグル
+├── Logging             ✓ トグル
+├── Screen context      ✓ トグル
+└── Quit
+```
+
 - **Status**: 現在の状態 (idle / recording / processing)
-- **Format → raw / clean / mail**: 整形モード切替 (チェックマークが移動 + `state.json` に永続化)
-- **LLM Model**: Ollama に pull 済みのモデル一覧から選択。クリックすると即時切替 + 背景 warmup + `state.json` に永続化。`Refresh model list` で `ollama pull` 直後のモデルも反映可
-- **History**: 直近 10 件の音声入力結果。クリックでクリップボードに再コピー、`Open history file` で全履歴を開く、`Clear history` で全消去
-- **Vocabulary** (Phase E): 現在使われているカスタム語彙のプレビュー。`Refresh now` で履歴ファイルから即時再構築
+- **Format**: 整形モード切替。`raw` (整形なし) / `clean` (フィラー除去・句読点) /
+  `mail` (です・ます調のビジネスメール) / `mail_en` (英語ビジネスメールに翻訳)。
+  `prompts/` に yaml を足せば独自モードも追加できる
+- **LLM Model**: Ollama に pull 済みのモデル一覧から選択。クリックで即時切替 +
+  背景 warmup。`Refresh model list` で `ollama pull` 直後のモデルも反映
+- **STT Model**: 文字起こしモデルの切替 (turbo / large-v3 / turbo-q4 / kotoba)。
+  ロード成功後に切り替わり、失敗時は元のモデルのまま (初回選択時はダウンロードあり)
+- **History**: 直近 10 件の音声入力結果。クリックでクリップボードに再コピー、
+  `Open history file` で全履歴を開く、`Clear history` で全消去
+- **Vocabulary**: カスタム語彙の管理。`+ 単語を追加…` でダイアログから登録
+  (カンマ・読点・スペース区切りで複数まとめて可)、`✎ 一覧をまとめて編集…` で
+  テキストエディタ風にまとめて編集、`登録済み (N)` から各語をクリックで削除、
+  `Refresh now` で履歴から即時再構築
 - **Auto-paste**: クリップボード貼り付けのみ ↔ 自動ペーストの切替
 - **Logging**: ログ収集 + 履歴記録の ON/OFF (機密の話を扱う時用)
-- **Screen context** (Phase F): 画面コンテキスト認識の ON/OFF (AX が使える環境のみ表示)
+- **Screen context**: 画面コンテキスト認識の ON/OFF (AX が使える環境のみ表示)
 - **Quit**: 終了
 
-メニューでの選択 (`format_mode` / `llm_model` / `screen_context`) は
+メニューでの選択 (`format_mode` / `llm_model` / `whisper_model` /
+`screen_context` / 追加した語彙) は
 `~/Library/Application Support/voiceinput/state.json` に保存されるので、
 アプリを再起動しても前回の設定で立ち上がる。`config.yaml` で明示指定された
 値があればそちらが state より優先される。
