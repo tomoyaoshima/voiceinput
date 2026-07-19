@@ -75,7 +75,7 @@ ollama pull gemma4:12b
 # ollama pull gemma4:26b       # もっと高精度 (17GB / やや重い)
 
 # 初回は Whisper モデル (~3GB) を先に落としておくと起動が速い
-uv run python -c "from huggingface_hub import snapshot_download; snapshot_download('mlx-community/whisper-large-v3-mlx')"
+uv run python -c "from huggingface_hub import snapshot_download; snapshot_download('mlx-community/whisper-large-v3-turbo')"
 ```
 
 ## 必須の権限 (System Settings → Privacy & Security)
@@ -202,8 +202,21 @@ vocabulary:
   top_n: 30
   rebuild_every: 10
   max_chars: 200
+replacements:                       # 確定置換 (詳細は後述の節を参照)
+  - from: "ぺいぱる"
+    to: "PayPal"
+app_mode:                           # アプリ別のモード自動切替 (任意)
+  enabled: true
+  rules:
+    - match_bundle: "com.apple.mail"
+      mode: "mail"
+    - match_title: "Gmail"
+      mode: "mail_en"
 ```
 
+上記は抜粋。**全設定キーとコメント付きの説明は
+[config.yaml.example](config.yaml.example) を参照** (画面コンテキストの
+`screen_context:` などもここにある)。
 設定の読み込み順: `./config.yaml` → `~/.config/voiceinput/config.yaml` → 内蔵デフォルト。
 
 ## 整形モード
@@ -229,7 +242,7 @@ vocabulary:
 ├── LLM Model       ▶  整形用モデルの一覧 + Refresh model list
 ├── STT Model       ▶  文字起こしモデルの切替
 ├── History         ▶  直近 10 件 + Open history file / Clear history
-├── Vocabulary      ▶  + 単語を追加… / ✎ 一覧をまとめて編集… / 登録済み (N) / Refresh now
+├── Vocabulary      ▶  現在の語彙プレビュー / + 単語を追加… / ✎ 一覧をまとめて編集… / 登録済み (N) / Refresh now
 ├── Auto-paste          ✓ トグル
 ├── Logging             ✓ トグル
 ├── Screen context      ✓ トグル
@@ -246,7 +259,8 @@ vocabulary:
   ロード成功後に切り替わり、失敗時は元のモデルのまま (初回選択時はダウンロードあり)
 - **History**: 直近 10 件の音声入力結果。クリックでクリップボードに再コピー、
   `Open history file` で全履歴を開く、`Clear history` で全消去
-- **Vocabulary**: カスタム語彙の管理。`+ 単語を追加…` でダイアログから登録
+- **Vocabulary**: カスタム語彙の管理。先頭に現在 Whisper へ渡している語彙の
+  プレビューを表示。`+ 単語を追加…` でダイアログから登録
   (カンマ・読点・スペース区切りで複数まとめて可)、`✎ 一覧をまとめて編集…` で
   テキストエディタ風にまとめて編集、`登録済み (N)` から各語をクリックで削除、
   `Refresh now` で履歴から即時再構築
@@ -286,7 +300,7 @@ vocabulary:
 ## 履歴
 
 整形済みテキストは `~/Library/Application Support/voiceinput/history.jsonl` に
-JSONL で append される (直近 200 件)。
+JSONL 形式で保存される (直近 200 件を保持、古いものから削除)。
 1 行 1 入力で `timestamp / mode / text / raw_text / audio_sec / stt_sec / llm_sec`
 を保存。Logging を OFF にしている間は履歴も書き込まれない。
 
