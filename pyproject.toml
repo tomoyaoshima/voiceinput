@@ -1,0 +1,33 @@
+[project]
+name = "voiceinput"
+version = "0.1.0"
+description = "Local AI voice input app for macOS (mlx-whisper + Ollama)"
+readme = "README.md"
+authors = [
+    { name = "tomoyaoshima", email = "92708968+tomoyaoshima@users.noreply.github.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "httpx>=0.28.1",
+    "mlx-whisper>=0.4.3",
+    "numpy>=2.4.4",
+    "pync>=2.0.3",
+    "pynput>=1.8.1",
+    "pyperclip>=1.11.0",
+    "pyyaml>=6.0.3",
+    "rumps>=0.4.0",
+    "silero-vad>=6.2.1",
+    "sounddevice>=0.5.5",
+]
+
+[project.scripts]
+voiceinput = "voiceinput.app:main"
+
+[build-system]
+requires = ["uv_build>=0.11.7,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]

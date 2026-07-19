@@ -1,0 +1,131 @@
+# voiceinput config (copy to ~/.config/voiceinput/config.yaml or place beside the app as ./config.yaml)
+
+# pynput hotkey notation.
+# - 単独修飾キー: <cmd_r> (右 Command), <cmd_l>, <alt_r>, <alt_l>, <ctrl_r>, ... (押下後に他キーと組み合わせなければトグル動作)
+# - 組み合わせ: <ctrl>+<alt>+v など (押下中だけ録音 / 短押し2回で継続)
+# macOS では <alt> = Option (<option> は使えない)
+hotkey: "<cmd_r>"
+
+whisper:
+  # mlx-community/whisper-large-v3-turbo (高速・実用精度、推奨) /
+  # mlx-community/whisper-large-v3-mlx (高精度・低速) /
+  # mlx-community/whisper-large-v3-turbo-q4 (q4 量子化、更に高速だが固有名詞精度がやや落ちる)
+  model: "mlx-community/whisper-large-v3-turbo"
+  language: "ja"
+
+ollama:
+  endpoint: "http://localhost:11434"
+  # 実運用比較 (qwen2.5:7b/14b, qwen3:8b, gemma4:26b) の中で「控えめ・速い・
+  # meta 出さない」が voiceinput の整形タスクに最もフィットしたため
+  # gemma4:e4b を default に採用。menu bar の "LLM Model" から別モデルへ
+  # 切替可、選択は ~/Library/Application Support/voiceinput/state.json に永続化。
+  model: "gemma4:e4b"
+  timeout_sec: 60.0
+  # 整形の決定性。低いほど忠実 (0.0=完全決定的) / 高いほど創造的 (1.0+)。
+  # clean モードは 0.2 推奨。意訳されすぎたら下げる、固すぎたら少し上げる。
+  temperature: 0.2
+  # 生成上限トークン。音声入力 1 ターンには 512 でも足りるが、
+  # gemma4:26b など内部 reasoning する系は本文出力前に 700+ token 消費するため
+  # 1024 を既定にしている。fast model (qwen2.5 など) は stop で早期終了するので
+  # 上限を上げてもレイテンシには影響しない。
+  num_predict: 1024
+  # コンテキスト最大トークン (system + 入力 + 出力 の合計、小さいほど速い)
+  num_ctx: 1024
+  # モデルのメモリ常駐時間。"-1" で永続、"30m"/"1h"/"24h" など。コールドスタート抑制用
+  # voiceinput は menu bar 常駐なので、Ollama 側もほぼ常駐 (24h) を既定にする
+  keep_alive: "24h"
+
+# raw: 整形なし / clean: フィラー除去・句読点 / mail: です・ます調・敬語
+default_format_mode: "clean"
+
+auto_paste: true        # menu bar からも切替可
+notify: true
+logging_enabled: true   # menu bar からも切替可
+log_dir: "~/Library/Logs/voiceinput"
+prompts_dir: "./prompts"
+
+# Phase E: カスタム語彙ヒント (Whisper の initial_prompt に渡る)
+# 履歴の整形後テキストから頻出語を自動抽出 + 手動リストを合成して渡す。
+# 固有名詞や社内用語の認識精度が上がるが、Whisper の 224 トークン制限上、
+# 文字数 max_chars で打ち切る。
+vocabulary:
+  enabled: true
+  # 必ず認識させたい語を列挙 (auto より優先)
+  manual: []
+  # 履歴の何件まで遡って語彙を抽出するか
+  history_size: 100
+  # 履歴から取り出す上位 N 語
+  top_n: 30
+  # この件数の transcribe ごとに自動再構築。menu bar からも即時更新可能
+  rebuild_every: 10
+  # initial_prompt の最大文字数 (Whisper のトークン上限を意識)
+  max_chars: 200
+  # Phase G: initial_prompt の形式。
+  # "list" (推奨): 「語、語、語。」句読点プライミング。句読点出力が安定し、
+  #   重要語 (画面語) を末尾に置いて Whisper の条件付けを最大化する。
+  #   全体は 110 文字 (≈220 token 未満) に切詰め、超過時は先頭の語から落とす。
+  # "terms": 従来のスペース区切り (rollback 用)
+  prompt_style: "list"
+
+# Phase F: 画面コンテキスト認識
+# 録音開始時に「今フォーカスしている入力欄/ウィンドウのテキスト」を
+# Accessibility API で読み取り、その場の固有名詞を Whisper の initial_prompt と
+# 整形 LLM の文脈ヒントに渡して認識精度を上げる。
+#
+# プライバシー: 全処理ローカル完結 (外部送信なし)。パスワード欄は常に自動
+# スキップ、取得した生テキストは履歴・ログに書かない。menu bar の
+# 「Screen context」トグルで即 OFF にでき、Logging を OFF にすると連動して
+# 画面コンテキストも無効化される。メール/トークン/カード番号などの機密
+# パターンは自動でマスク (███) してから利用する。
+screen_context:
+  enabled: true
+  # Whisper prompt に足す画面語の文字数枠 (幻覚抑制のため控えめに)
+  terms_max_chars: 120
+  # LLM 整形に渡す「表記参考語」の文字数枠 (語リストのみ。周辺の文は渡さない)
+  llm_max_chars: 120
+  # 入力欄本文を読むか。false なら件名/選択テキスト/アプリ名のみ使う
+  read_focused_value: true
+  # 本文を読まない機密アプリ (bundle id)。空ならビルトイン既定
+  # (Keychain / 1Password / Bitwarden / LastPass) を使う
+  denylist_bundles: []
+
+# 決定的テキスト置換 (replacements)
+# STT / LLM が誤変換しやすい固有名詞・商品名・ブランド名・取引先名を、確定的な
+# 単純文字列の find -> replace で最後に直す。カスタム語彙 (vocabulary) が
+# 「認識しやすくするヒント」なのに対し、これは「最終出力を確定で固定する」後段。
+# 整形 (clean/mail/mail_en) の後、貼り付け直前に raw を含む全モードへ適用される。
+#
+# 仕様: 正規表現ではなく単純な substring 置換。大文字小文字は区別。記載順に適用
+# (前のルールの結果に次のルールがかかる)。空なら無効。
+replacements: []
+#   - from: "ペイパル"
+#     to: "PayPal"
+#   - from: "さんぷる"
+#     to: "サンプル商会"
+#   - from: "ショッピファイ"
+#     to: "Shopify"
+
+# アプリ別モード自動切替 (app_mode)
+# フォーカス中のアプリ / ウィンドウに応じて整形モードを自動で切り替える。
+# 例: Mail.app では mail、ブラウザで Gmail を開いている時は mail_en (英訳)。
+#
+# - enabled: false なら従来どおりメニューの手動選択モード固定。
+# - rules は上から順に評価し、最初にヒットしたモードを「その録音だけ」適用する
+#   (メニューの手動選択は変更しない)。どれもヒットしなければ手動モードのまま。
+# - match_bundle: アプリの bundle id と完全一致で判定 (AX 権限不要・常時有効)。
+# - match_title: ウィンドウタイトルの部分一致で判定 (大文字小文字無視)。
+#   タイトル取得は Accessibility 権限が要るため、screen_context が無効/未許可の
+#   ときは title ルールはスキップされる (bundle ルールは引き続き有効)。
+# - 1 ルールには match_bundle か match_title の【どちらか片方】だけ書く。
+#   両方書くと match_bundle が優先され、match_title は無視される。
+#   (例: ブラウザの特定サイトだけ切り替えたい時は match_title のみを使う)
+# - mode は raw / clean / mail / mail_en、または prompts/ に追加した任意モード。
+app_mode:
+  enabled: false
+  rules: []
+  #   - match_bundle: "com.apple.mail"
+  #     mode: "mail"
+  #   - match_title: "Gmail"
+  #     mode: "mail_en"
+  #   - match_bundle: "com.tinyspeck.slackmacgap"
+  #     mode: "clean"

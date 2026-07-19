@@ -1,0 +1,21 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# ローカル設定 — 個人の語彙・置換ルール・取引先名などが入るので絶対にコミットしない
+config.yaml
+
+# ローカル生成物 (音声の書き起こし履歴・ログ・UI 状態)
+*.log
+history.jsonl
+state.json
+
+# macOS
+.DS_Store
