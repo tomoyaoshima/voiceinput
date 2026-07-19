@@ -15,11 +15,14 @@ whisper:
 
 ollama:
   endpoint: "http://localhost:11434"
-  # 実運用比較 (qwen2.5:7b/14b, qwen3:8b, gemma4:26b) の中で「控えめ・速い・
-  # meta 出さない」が voiceinput の整形タスクに最もフィットしたため
-  # gemma4:e4b を default に採用。menu bar の "LLM Model" から別モデルへ
-  # 切替可、選択は ~/Library/Application Support/voiceinput/state.json に永続化。
-  model: "gemma4:e4b"
+  # 実運用比較 (qwen2.5:7b/14b, qwen3:8b, gemma4:e4b/12b/26b) の結論として
+  # gemma4:12b が速度と精度のバランス最良。表記補正 (かもしだ→鴨志田 など) が
+  # 的確で、勝手な言い換えもしない。7.6GB と e4b より小さいのに賢い。
+  #   もっと軽く・速くしたい → "gemma4:e4b"  (9.6GB / ~0.4s、表記補正は控えめ)
+  #   もっと高精度にしたい   → "gemma4:26b"  (17GB / やや重い)
+  # menu bar の "LLM Model" から切替可、選択は
+  # ~/Library/Application Support/voiceinput/state.json に永続化。
+  model: "gemma4:12b"
   timeout_sec: 60.0
   # 整形の決定性。低いほど忠実 (0.0=完全決定的) / 高いほど創造的 (1.0+)。
   # clean モードは 0.2 推奨。意訳されすぎたら下げる、固すぎたら少し上げる。

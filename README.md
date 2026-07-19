@@ -67,12 +67,12 @@ cd voiceinput
 # 仮想環境と依存をまとめて構築 (uv 管理の arm64 Python を使う)
 uv sync --python-preference only-managed
 
-# Ollama に整形用モデルを pull (default は gemma4:e4b ≈ 9.6GB)
-# 実運用比較で「控えめ整形・速い・meta なし」が一番フィット
-ollama pull gemma4:e4b
-# 任意: 整形を強めにしたい時用のサブ候補
-# ollama pull qwen2.5:14b      # 同音異義の修正に積極的 (meta は内蔵 strip)
-# ollama pull gemma4:26b       # 高精度・内部 reasoning 系
+# Ollama に整形用モデルを pull
+# gemma4:12b が速度と精度のバランス最良でおすすめ (default)
+ollama pull gemma4:12b
+# 任意: 好みに応じて切替 (menu bar の LLM Model から選べる)
+# ollama pull gemma4:e4b       # もっと軽く・速く (9.6GB / ~0.4s、表記補正は控えめ)
+# ollama pull gemma4:26b       # もっと高精度 (17GB / やや重い)
 
 # 初回は Whisper モデル (~3GB) を先に落としておくと起動が速い
 uv run python -c "from huggingface_hub import snapshot_download; snapshot_download('mlx-community/whisper-large-v3-mlx')"
@@ -185,7 +185,7 @@ whisper:
   language: "ja"
 ollama:
   endpoint: "http://localhost:11434"
-  model: "gemma4:e4b"      # 推奨デフォルト。menu bar から別モデルへ切替可 (state.json に永続化)
+  model: "gemma4:12b"      # 推奨デフォルト (速度と精度のバランス最良)。軽くしたいなら gemma4:e4b
   num_predict: 1024         # gemma4:26b 等の reasoning 系も含めた安全値
   num_ctx: 1024
   keep_alive: "24h"         # menu bar 常駐に合わせて Ollama 側もほぼ常駐
@@ -375,8 +375,8 @@ uv run python scripts/mine_replacements.py
 - アクセシビリティ権限が未付与 → System Settings → Privacy & Security → Accessibility に `python3.11` を追加して ON
 
 **Ollama がタイムアウトする**
-- `ollama list` で `gemma4:e4b` (default) が入っているか確認
-- 大きめのモデル (qwen2.5:14b / gemma4:26b 等) の初回呼び出しはコールドスタートで 5-10 秒かかる。アプリ起動直後に warmup 済みなのでしばらく待つ
+- `ollama list` で `gemma4:12b` (default) が入っているか確認
+- 大きめのモデル (gemma4:26b / qwen2.5:14b 等) の初回呼び出しはコールドスタートで 5-10 秒かかる。アプリ起動直後に warmup 済みなのでしばらく待つ
 - それでも遅ければ menu bar の **LLM Model** から軽量モデル (`gemma4:e4b`, `qwen2.5:7b`, `phi4:latest`) に切替
 
 **さらに高速化したい (品質を少し落としても速度優先)**
@@ -385,7 +385,7 @@ uv run python scripts/mine_replacements.py
   STT が概ね 1.5-2 倍速くなるが、固有名詞の精度がやや落ちる。
   Phase E のカスタム語彙 (Whisper `initial_prompt`) で
   ある程度はカバーできる
-- LLM は default の `gemma4:e4b` のまま運用 (軽量 9.6GB / ~0.4s)。さらに速くしたければ `qwen2.5:7b` や `phi4:latest`
+- LLM を default の `gemma4:12b` から `gemma4:e4b` に切替 (~0.4s と軽快。表記補正は控えめになる)。さらに速くしたければ `qwen2.5:7b` や `phi4:latest`
 - `config.yaml` で `ollama.keep_alive: "-1"` にすると Ollama がモデルを永続的に
   メモリ保持するので、長時間放置後のコールドスタートを完全に消せる
   (Mac mini のメモリが厳しいときは戻す)

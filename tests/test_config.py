@@ -10,10 +10,10 @@ def test_default_config_has_required_fields():
     assert isinstance(cfg, Config)
     assert cfg.hotkey == "<cmd_r>"
     # 体感速度を優先して 7b デフォルト。14b は menu bar から都度切替で永続化される
-    # gemma4:e4b は実運用比較 (qwen2.5:7b/14b, qwen3:8b, gemma4:26b) の
-    # 中で「控えめ・速い・meta なし」が voiceinput の整形タスクに最も
-    # フィットしたため default に採用。
-    assert cfg.ollama_model == "gemma4:e4b"
+    # gemma4:12b は実運用比較 (qwen2.5:7b/14b, qwen3:8b, gemma4:e4b/26b) の
+    # 中で速度と精度のバランスが最良だったため default に採用。
+    # より軽く速くしたい場合は gemma4:e4b。
+    assert cfg.ollama_model == "gemma4:12b"
     assert cfg.default_format_mode == "clean"
     assert cfg.whisper_language == "ja"
     assert cfg.auto_paste is True

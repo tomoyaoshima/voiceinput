@@ -55,13 +55,15 @@ def default_config() -> Config:
         whisper_model="mlx-community/whisper-large-v3-turbo",
         whisper_language="ja",
         ollama_endpoint="http://localhost:11434",
-        # 実運用比較 (qwen2.5:7b/14b, qwen3:8b, gemma4:e4b/26b) の結論として
-        # gemma4:e4b を default に採用:
-        #   - 控えめな整形 (発話を勝手に言い換えない、誤訂正をしない)
-        #   - 速い (~0.4s) - menu bar UX に体感ピッタリ
-        #   - meta-commentary を出さない (post-processing 不要)
+        # 実運用比較 (qwen2.5:7b/14b, qwen3:8b, gemma4:e4b/12b/26b) の結論として
+        # gemma4:12b を default に採用 — 速度と精度のバランスが最良:
+        #   - 表記補正が的確 (かもしだ→鴨志田、こーでっくす→Codex など、
+        #     参考表記を渡した時にきちんと反映してくれる)
+        #   - 発話を勝手に言い換えない・meta-commentary を出さない
+        #   - 7.6GB と e4b (9.6GB) より小さいのに賢い
+        # より軽く・速くしたい場合は gemma4:e4b (~0.4s、ただし表記補正は控えめ)。
         # 別モデルが欲しい場合は menu bar から選択 → state.json に永続化される。
-        ollama_model="gemma4:e4b",
+        ollama_model="gemma4:12b",
         ollama_timeout_sec=60.0,
         ollama_temperature=0.2,
         # 音声入力 1 ターンの実態 (~200-400 文字) には 512 でも足りるが、
