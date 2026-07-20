@@ -1394,11 +1394,18 @@ class VoiceInputApp(rumps.App):
             t2 = time.perf_counter()
             # Phase F: 画面コンテキストの利用状況をログ (生テキストは出さない)。
             if screen_ctx is not None:
+                # どのフィールドが読めたかを「文字数だけ」記録する (生テキストは
+                # 出さない)。AX が使えるアプリ/使えないアプリの切り分けに使う。
                 self.logger.info(
-                    "screen_ctx app=%s trusted=%s terms=%d",
+                    "screen_ctx app=%s trusted=%s terms=%d "
+                    "(title=%d value=%d sel=%d role=%s)",
                     screen_ctx.app_name or "?",
                     screen_ctx.trusted,
                     len(screen_terms),
+                    len(screen_ctx.window_title),
+                    len(screen_ctx.focused_text),
+                    len(screen_ctx.selected_text),
+                    screen_ctx.role or "-",
                 )
             t_paste0 = time.perf_counter()
             copy_to_clipboard(formatted)
